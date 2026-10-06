@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenBridge - Innovating for a Sustainable Tomorrow</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .fade-enter { opacity: 0; transform: translateY(10px); }
+        .fade-enter-active { opacity: 1; transform: translateY(0); transition: opacity 500ms, transform 500ms; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+
+    <!-- Shared Components Containers -->
+    <div id="navbar-container"></div>
+    <div id="modal-container"></div>
+
+    <main class="flex-grow">
+        <!-- Hero Section -->
+        <section class="bg-green-900 text-white py-20 relative overflow-hidden">
+            <div class="absolute inset-0 opacity-20 bg-[url('https://placehold.co/1920x1080/png?text=Sustainable+Tomorrow')] bg-cover bg-center"></div>
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col md:flex-row items-center">
+                <div class="md:w-1/2 mb-10 md:mb-0">
+                    <h1 class="text-5xl md:text-6xl font-extrabold leading-tight mb-6">Innovating for a <br/><span class="text-green-400">Sustainable Tomorrow</span></h1>
+                    <p class="text-lg text-green-100 mb-8 max-w-lg">Discover eco-friendly ideas, join impactful NGO campaigns, and earn certificates as a green volunteer.</p>
+                    <div class="flex space-x-4">
+                        <button onclick="document.getElementById('grid-section').scrollIntoView({behavior: 'smooth'})" class="bg-green-500 hover:bg-green-400 text-white px-6 py-3 rounded-xl font-bold transition flex items-center">
+                            Explore Ideas <i data-lucide="arrow-right" class="w-5 h-5 ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Rotating Hero Card -->
+                <div class="md:w-1/2 flex justify-center w-full">
+                    <div id="hero-card" class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md text-gray-800 transition-all duration-500 transform">
+                        <!-- Content injected by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- News / Notification Banner -->
+        <div class="bg-blue-600 text-white py-3 overflow-hidden relative border-t-2 border-blue-700">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center">
+                <span class="font-bold mr-4 shrink-0 flex items-center bg-blue-800 px-3 py-1 rounded text-xs uppercase tracking-wider"><i data-lucide="bell" class="w-4 h-4 mr-2 animate-pulse"></i> Latest News</span>
+                <div class="marquee-container overflow-hidden whitespace-nowrap w-full">
+                    <p class="inline-block animate-marquee text-sm font-medium">
+                        Welcome to GreenBridge! &bull; New Campaign: Beach Cleanup Drive in Marina Beach starting Nov 10! &bull; Congratulations to 'Edible Cutlery' for successfully cracking a deal with EcoSolutions Corp! &bull; GreenEarth Alliance just joined our network!
+                    </p>
+                </div>
+            </div>
+        </div>
+        <style>
+            @keyframes marquee {
+                0% { transform: translateX(100%); }
+                100% { transform: translateX(-100%); }
+            }
+            .animate-marquee {
+                display: inline-block;
+                animation: marquee 25s linear infinite;
+            }
+        </style>
+        
+        <!-- Impact Counters -->
+        <section class="py-12 bg-white border-b border-gray-200 shadow-sm relative z-20 mx-4 sm:mx-auto max-w-5xl rounded-2xl md:-mt-6 mt-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center px-6" id="counters-container">
+                <!-- Injected by JS -->
+            </div>
+        </section>
+
+        <!-- Innovator Grid Section -->
+        <section id="grid-section" class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-10">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Sustainable Innovations</h2>
+                    <p class="text-gray-600">Browse ideas that are changing the world.</p>
+                </div>
+                <div class="mt-4 md:mt-0 flex space-x-2 overflow-x-auto pb-2">
+                    <button class="filter-btn active bg-green-600 text-white px-4 py-2 rounded-full text-sm font-medium" data-filter="All">All</button>
+                    <button class="filter-btn bg-gray-200 text-gray-700 hover:bg-gray-300 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap" data-filter="Plastic alternatives">Plastic Alts</button>
+                    <button class="filter-btn bg-gray-200 text-gray-700 hover:bg-gray-300 px-4 py-2 rounded-full text-sm font-medium" data-filter="Energy">Energy</button>
+                    <button class="filter-btn bg-gray-200 text-gray-700 hover:bg-gray-300 px-4 py-2 rounded-full text-sm font-medium" data-filter="Water">Water</button>
+                    <button class="filter-btn bg-gray-200 text-gray-700 hover:bg-gray-300 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap" data-filter="Agriculture">Agriculture</button>
+                </div>
+            </div>
+            
+            <div id="ideas-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Injected by JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <div id="footer-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/db.js"></script>
+    <script src="js/components.js?v=9"></script>
+    <script src="js/home.js"></script>
+</body>
+</html>

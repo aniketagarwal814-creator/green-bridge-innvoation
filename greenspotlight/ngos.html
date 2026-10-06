@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGOs - GreenSpotlight</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <div id="navbar-container"></div>
+    <div id="modal-container"></div>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
+        <div class="mb-8 text-center">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-4">Partner NGOs</h1>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">Discover the incredible organizations driving change and running impactful campaigns on GreenSpotlight.</p>
+        </div>
+
+        <div id="ngos-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Rendered by JS -->
+        </div>
+    </main>
+
+    <div id="footer-container"></div>
+
+    <script src="js/db.js"></script>
+    <script src="js/components.js?v=9"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const db = getDB();
+            const grid = document.getElementById('ngos-grid');
+            
+            if (db.ngos.length === 0) {
+                grid.innerHTML = `<p class="col-span-3 text-center text-gray-500 py-10">No NGOs found.</p>`;
+                return;
+            }
+            
+            grid.innerHTML = db.ngos.map(ngo => `
+                <div class="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow p-8 border border-gray-100 flex flex-col items-center text-center">
+                    <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                        <i data-lucide="globe" class="w-10 h-10 text-blue-500"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2 flex items-center justify-center">
+                        ${ngo.name}
+                        ${ngo.verified ? '<i data-lucide="badge-check" class="w-5 h-5 text-blue-500 ml-2 fill-current"></i>' : ''}
+                    </h3>
+                    <p class="text-gray-500 text-sm mb-6">${ngo.verified ? 'Verified Partner' : 'Community Partner'}</p>
+                    <a href="campaigns.html" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-2 rounded-xl transition">View Campaigns</a>
+                </div>
+            `).join('');
+            
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
+

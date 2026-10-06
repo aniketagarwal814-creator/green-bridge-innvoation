@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campaigns - GreenSpotlight</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <div id="navbar-container"></div>
+    <div id="modal-container"></div>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
+        <div class="flex justify-between items-end mb-8">
+            <div>
+                <h1 class="text-4xl font-extrabold text-gray-900 mb-2">Active Campaigns</h1>
+                <p class="text-lg text-gray-600">Join a campaign and make a real-world impact.</p>
+            </div>
+            <div id="volunteer-points" class="hidden text-right">
+                <span class="bg-green-100 text-green-800 px-4 py-2 rounded-full font-bold shadow-sm inline-flex items-center">
+                    <i data-lucide="award" class="w-4 h-4 mr-2"></i>
+                    <span id="vp-count">0</span> Points
+                </span>
+            </div>
+        </div>
+
+        <div id="campaigns-grid" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Rendered by JS -->
+        </div>
+    </main>
+
+    <div id="footer-container"></div>
+
+    <script src="js/db.js"></script>
+    <script src="js/components.js?v=9"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const db = getDB();
+            const user = db.currentUser;
+            const grid = document.getElementById('campaigns-grid');
+            
+            // Show points if volunteer
+            if (user && user.role === 'Volunteer') {
+                document.getElementById('volunteer-points').classList.remove('hidden');
+                const vol = db.volunteers.find(v => v.id === user.id);
+                if(vol) document.getElementById('vp-count').innerText = vol.points;
+            }
+            
+            if (db.campaigns.length === 0) {
+                grid.innerHTML = `<p class="col-span-2 text-center text-gray-500 py-10">No active campaigns at the moment.</p>`;
+                return;
+            }
+            
+            renderCampaigns();
+            
+            // Allow joining in global scope
+            window.joinCampaign = function(campId) {
+                if (!user) {
+                    document.getElementById('login-modal').classList.remove('hidden');
+                    return;
+                }
+                if (user.role !== 'Volunteer') {
+                    alert('Only volunteers can join campaigns!');
+                    return;
+                }
+                const currentDb = getDB();
+                const camp = currentDb.campaigns.find(c => c.id === campId);
+                if (camp) {
+                    if (!camp.participants) camp.participants = [];
+                    // Check if already joined
+                    if (camp.participants.some(p => p.volunteerId === user.id)) {
+                        alert("You have already joined this campaign!");
+                        return;
+                    }
+                    camp.participants.push({ volunteerId: user.id, status: 'joined' });
+                    saveDB(currentDb);
+                    alert("Successfully joined the campaign!");
+                    renderCampaigns(); // refresh
+                }
+            }
+        });
+        
+        function renderCampaigns() {
+            const db = getDB();
+            const user = db.currentUser;
+            const grid = document.getElementById('campaigns-grid');
+            
+            grid.innerHTML = db.campaigns.map(camp => {
+                const ngo = db.ngos.find(n => n.id === camp.ngoId);
+                const ngoName = ngo ? ngo.name : 'Unknown NGO';
+                const partsCount = camp.participants ? camp.participants.length : 0;
+                
+                let isJoined = false;
+                let isCompleted = false;
+                if (user && user.role === 'Volunteer' && camp.participants) {
+                    const myPart = camp.participants.find(p => p.volunteerId === user.id);
+                    if (myPart) {
+                        isJoined = true;
+                        isCompleted = (myPart.status === 'completed');
+                    }
+                }
+                
+                let btnHTML = `<button onclick="joinCampaign('${camp.id}')" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition shadow-md">Join Campaign</button>`;
+                
+                if (isCompleted) {
+                    btnHTML = `<button disabled class="w-full bg-gray-100 text-green-700 border border-green-200 font-bold py-3 rounded-xl flex items-center justify-center cursor-not-allowed"><i data-lucide="check-circle" class="w-5 h-5 mr-2"></i> Completed</button>`;
+                } else if (isJoined) {
+                    btnHTML = `<button disabled class="w-full bg-gray-100 text-gray-500 font-bold py-3 rounded-xl flex items-center justify-center cursor-not-allowed"><i data-lucide="clock" class="w-5 h-5 mr-2"></i> Pending Completion</button>`;
+                }
+
+                return `
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+                    <div class="p-6 md:p-8 flex-grow">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-3 py-1 rounded-full">${ngoName}</span>
+                            <span class="text-sm font-medium text-gray-500"><i data-lucide="calendar" class="w-4 h-4 inline mr-1"></i>${camp.date}</span>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">${camp.title}</h3>
+                        <p class="text-gray-600 mb-6 flex items-center"><i data-lucide="map-pin" class="w-4 h-4 mr-2"></i> ${camp.location}</p>
+                        
+                        <div class="bg-gray-50 rounded-xl p-4 mb-6">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="font-bold text-gray-700">Volunteers</span>
+                                <span class="text-green-600 font-bold">${partsCount} / ${camp.volunteersNeeded}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div class="bg-green-500 h-2.5 rounded-full" style="width: ${Math.min(100, (partsCount / camp.volunteersNeeded) * 100)}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-6 md:px-8 pb-6 md:pb-8">
+                        ${btnHTML}
+                    </div>
+                </div>
+            `}).join('');
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impact Vault - GreenSpotlight</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <div id="navbar-container" class="print:hidden"></div>
+    <div id="modal-container" class="print:hidden"></div>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full print:hidden">
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-2">My Impact Vault</h1>
+        <p class="text-gray-600 mb-8">Manage your eco-contributions, certificates, and badges.</p>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <!-- Left Column: Profile & Badges -->
+            <div class="space-y-6">
+                <!-- Points Card -->
+                <div class="bg-gradient-to-br from-green-500 to-green-700 rounded-2xl shadow-xl p-6 text-white flex items-center justify-between">
+                    <div>
+                        <p class="text-green-100 font-medium">Total Points</p>
+                        <p class="text-4xl font-black" id="v-points">0</p>
+                    </div>
+                    <i data-lucide="award" class="w-12 h-12 text-green-200"></i>
+                </div>
+                
+                <!-- Badges -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="font-bold text-gray-800 mb-4 flex items-center"><i data-lucide="shield-check" class="w-5 h-5 mr-2 text-green-600"></i> Earned Badges</h3>
+                    <div id="v-badges" class="flex flex-wrap gap-2 mb-6">
+                        <!-- Rendered by JS -->
+                    </div>
+                    
+                    <div class="pt-4 border-t border-gray-100">
+                        <h4 class="font-bold text-sm text-gray-600 mb-3 uppercase tracking-wider">Available to Earn</h4>
+                        <div class="flex flex-wrap gap-2" id="available-badges">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Custom Cert -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="font-bold text-gray-800 mb-4">Upload External Certificate</h3>
+                    <p class="text-xs text-gray-500 mb-4">Did some eco-work outside GreenSpotlight? Store your certificate safely here.</p>
+                    <form id="upload-cert-form" class="space-y-3">
+                        <input type="text" id="uc-title" placeholder="Certificate Title" required class="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg">
+                        <input type="file" id="uc-file" accept="image/*" required class="w-full text-xs text-gray-500 file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:bg-gray-100 file:text-gray-700">
+                        <button type="submit" class="w-full bg-gray-800 hover:bg-gray-900 text-white text-sm font-bold py-2 rounded-lg transition">Save to Vault</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Column: Certificates -->
+            <div class="md:col-span-2">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6 border-b pb-2">My Certificates</h3>
+                    <div id="v-certs" class="space-y-4">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Hidden Certificate Print Template -->
+    <div id="print-cert" class="hidden print:block fixed inset-0 bg-white p-10 z-[1000]">
+        <div class="border-8 border-double border-green-700 p-12 h-full flex flex-col justify-center items-center text-center relative">
+            <i data-lucide="leaf" class="absolute top-10 left-10 w-16 h-16 text-green-100"></i>
+            <i data-lucide="leaf" class="absolute top-10 right-10 w-16 h-16 text-green-100"></i>
+            
+            <h1 class="text-5xl font-black text-green-800 mb-2 font-serif uppercase tracking-widest">Certificate of Impact</h1>
+            <p class="text-lg text-gray-500 mb-12">Proudly presented to</p>
+            
+            <h2 class="text-4xl font-bold text-gray-900 mb-8 italic" id="p-name">Name</h2>
+            
+            <p class="text-xl text-gray-700 mb-4">For successfully completing the campaign:</p>
+            <h3 class="text-2xl font-bold text-green-700 mb-8" id="p-camp">Campaign Name</h3>
+            
+            <p class="text-gray-600 mb-12">Organized by <strong id="p-ngo">NGO Name</strong> on <strong id="p-date">Date</strong></p>
+            
+            <div class="mt-auto flex justify-between w-full px-20">
+                <div class="text-center">
+                    <div class="border-b-2 border-gray-400 w-40 mb-2 mx-auto"></div>
+                    <p class="text-sm font-bold text-gray-500">GreenSpotlight Auth</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-xs text-gray-400 mb-1">Verify at: <span id="p-verify-link">link</span></p>
+                    <p class="text-xs text-gray-400">ID: <span id="p-id">ID</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-container" class="print:hidden"></div>
+
+    <script src="js/db.js"></script>
+    <script src="js/components.js?v=9"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const db = getDB();
+            const user = db.currentUser;
+            
+            if (!user || user.role !== 'Volunteer') {
+                alert("Only volunteers can access the Impact Vault.");
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const vol = db.volunteers.find(v => v.id === user.id);
+            if(vol) {
+                document.getElementById('v-points').innerText = vol.points;
+                
+                // Render Badges
+                const badgeContainer = document.getElementById('v-badges');
+                if(vol.badges.length === 0) {
+                    badgeContainer.innerHTML = '<p class="text-xs text-gray-400 italic">Complete campaigns to earn badges!</p>';
+                } else {
+                    badgeContainer.innerHTML = vol.badges.map(b => `
+                        <span class="flex items-center bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full border border-green-200">
+                            <i data-lucide="award" class="w-3 h-3 mr-1 text-green-600"></i> ${b}
+                        </span>
+                    `).join('');
+                }
+                
+                // Render Available Badges
+                const allBadges = ['Green Champion', 'First Campaign', 'Eco Warrior', 'Community Leader', 'Zero Waste Hero'];
+                const availableContainer = document.getElementById('available-badges');
+                const unearnedBadges = allBadges.filter(b => !vol.badges.includes(b));
+                
+                if (unearnedBadges.length === 0) {
+                    availableContainer.innerHTML = '<p class="text-xs text-gray-400 italic">You have earned all available badges!</p>';
+                } else {
+                    availableContainer.innerHTML = unearnedBadges.map(b => `
+                        <span class="flex items-center bg-gray-100 text-gray-500 text-xs font-bold px-3 py-1 rounded-full border border-gray-200 border-dashed">
+                            <i data-lucide="award" class="w-3 h-3 mr-1"></i> ${b}
+                        </span>
+                    `).join('');
+                }
+                // Fetch Certificates from Python SQL Backend
+                fetch('http://localhost:5000/api/vault/' + user.id)
+                    .then(res => res.json())
+                    .then(data => {
+                        renderCerts(data.certificates);
+                    })
+                    .catch(err => {
+                        console.error("Backend offline, falling back to local DB");
+                        renderCerts(vol.certificates);
+                    });
+            }
+
+            // Custom Upload -> Send to Python SQL Backend
+            document.getElementById('upload-cert-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const file = document.getElementById('uc-file').files[0];
+                const title = document.getElementById('uc-title').value;
+                if(!file) return;
+
+                const reader = new FileReader();
+                reader.onloadend = function() {
+                    const certData = {
+                        id: 'EXT-' + Date.now(),
+                        volunteerId: user.id,
+                        campaignTitle: title,
+                        ngoName: 'External',
+                        date: new Date().toISOString().split('T')[0],
+                        image: reader.result,
+                        isExternal: true
+                    };
+
+                    // Send to backend
+                    fetch('http://localhost:5000/api/vault/certificate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(certData)
+                    })
+                    .then(() => {
+                        alert("External certificate securely saved to your SQL vault!");
+                        document.getElementById('upload-cert-form').reset();
+                        window.location.reload();
+                    })
+                    .catch(err => alert("Error saving to backend: Make sure app.py is running."));
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        function renderCerts(certs) {
+            const container = document.getElementById('v-certs');
+            if(certs.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500 italic">No certificates yet.</p>';
+                return;
+            }
+            container.innerHTML = certs.map(c => {
+                if(c.isExternal) {
+                    return `
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                            <div>
+                                <h4 class="font-bold text-gray-800 flex items-center"><i data-lucide="upload-cloud" class="w-4 h-4 mr-2 text-gray-400"></i> ${c.campaignTitle}</h4>
+                                <p class="text-xs text-gray-500">External • Added ${c.date}</p>
+                            </div>
+                            <button onclick="viewImage('${c.image}')" class="text-sm bg-gray-200 hover:bg-gray-300 px-3 py-1.5 rounded font-medium text-gray-700 transition">View Image</button>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="flex items-center justify-between p-4 bg-green-50 rounded-xl border border-green-100 mb-2">
+                            <div>
+                                <h4 class="font-bold text-green-900 flex items-center"><i data-lucide="file-check" class="w-4 h-4 mr-2 text-green-600"></i> ${c.campaignTitle}</h4>
+                                <p class="text-xs text-green-700">${c.ngoName} • ${c.date}</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="leaveFeedback('${c.ngoName.replace(/'/g, "\\'")}')" class="text-sm bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border border-yellow-200 px-3 py-1.5 rounded font-bold transition">Review NGO</button>
+                                <button onclick="printCert('${c.id}', '${c.campaignTitle.replace(/'/g, "\\'")}', '${c.ngoName.replace(/'/g, "\\'")}', '${c.date}')" class="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded font-bold transition">Print / PDF</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+            lucide.createIcons();
+        }
+
+        window.viewImage = function(imgSrc) {
+            const win = window.open();
+            win.document.write('<img src="' + imgSrc + '" style="max-width:100%;"/>');
+        }
+
+        window.printCert = function(id, camp, ngo, date) {
+            const db = getDB();
+            document.getElementById('p-name').innerText = db.currentUser.name;
+            document.getElementById('p-camp').innerText = camp;
+            document.getElementById('p-ngo').innerText = ngo;
+            document.getElementById('p-date').innerText = date;
+            document.getElementById('p-id').innerText = id;
+            document.getElementById('p-verify-link').innerText = window.location.origin + '/verify.html?id=' + id;
+            
+            // Print automatically hides everything else due to print:hidden classes
+            window.print();
+        }
+
+        window.leaveFeedback = function(ngoName) {
+            const db = getDB();
+            const ngo = db.ngos.find(n => n.name === ngoName);
+            if (!ngo) {
+                alert("NGO not found.");
+                return;
+            }
+            
+            const feedbackText = prompt(`Leave a review or feedback for ${ngoName}:`);
+            if (feedbackText && feedbackText.trim() !== "") {
+                if (!ngo.reviews) ngo.reviews = [];
+                ngo.reviews.push({
+                    volunteerName: db.currentUser.name,
+                    text: feedbackText.trim(),
+                    date: new Date().toISOString().split('T')[0]
+                });
+                saveDB(db);
+                alert("Thank you! Your feedback has been saved.");
+            }
+        }
+    </script>
+</body>
+</html>
+

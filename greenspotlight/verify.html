@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Certificate - GreenSpotlight</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col justify-center items-center p-4">
+    <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 border border-gray-100 text-center relative overflow-hidden">
+        <!-- Top decorative band -->
+        <div class="h-2 w-full bg-green-500 absolute top-0 left-0"></div>
+
+        <a href="index.html" class="inline-flex items-center text-green-700 font-bold mb-8 hover:underline">
+            <i data-lucide="leaf" class="w-6 h-6 mr-2"></i> GreenSpotlight
+        </a>
+
+        <div id="result-container" class="py-4">
+            <i data-lucide="loader" class="w-12 h-12 text-green-500 animate-spin mx-auto mb-4"></i>
+            <p class="text-gray-500 font-medium">Verifying certificate...</p>
+        </div>
+    </div>
+
+    <script src="js/db.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const certId = params.get('id');
+
+            if (!certId) {
+                showError("No certificate ID provided.");
+                return;
+            }
+
+            // Verify using Python SQL Backend
+            fetch('http://localhost:5000/api/vault/verify/' + certId)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.valid) {
+                        // For display, we just need the volunteer name. The API returns volunteerId, we can cross reference local DB.
+                        const db = getDB();
+                        const vol = db.volunteers.find(v => v.id === data.certificate.volunteerId) || {name: 'Verified Volunteer'};
+                        showSuccess(data.certificate, vol);
+                    } else {
+                        showError("Invalid or missing certificate ID.");
+                    }
+                })
+                .catch(err => {
+                    console.error("Backend offline", err);
+                    showError("Backend API is currently offline.");
+                });
+        });
+
+        function showSuccess(cert, vol) {
+            const container = document.getElementById('result-container');
+            container.innerHTML = `
+                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="check-circle" class="w-10 h-10 text-green-600"></i>
+                </div>
+                <h2 class="text-2xl font-black text-gray-900 mb-2">Verified Authentic</h2>
+                <p class="text-gray-500 text-sm mb-6">This certificate was officially issued by GreenSpotlight.</p>
+                
+                <div class="bg-gray-50 rounded-xl p-4 text-left border border-gray-100 space-y-3">
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase">Volunteer Name</p>
+                        <p class="font-bold text-gray-800">${vol.name}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase">Campaign</p>
+                        <p class="font-medium text-gray-700">${cert.campaignTitle}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase">Issued By</p>
+                        <p class="font-medium text-gray-700">${cert.ngoName}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase">Date of Issue</p>
+                        <p class="font-medium text-gray-700">${cert.date}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase">Certificate ID</p>
+                        <p class="font-mono text-sm text-gray-600">${cert.id}</p>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function showError(msg) {
+            const container = document.getElementById('result-container');
+            container.innerHTML = `
+                <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="x-circle" class="w-10 h-10 text-red-600"></i>
+                </div>
+                <h2 class="text-2xl font-black text-gray-900 mb-2">Verification Failed</h2>
+                <p class="text-gray-500 text-sm mb-6">${msg}</p>
+                <a href="index.html" class="inline-block bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-6 rounded-xl transition">Return Home</a>
+            `;
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>
+
